@@ -3,7 +3,7 @@ from multiprocessing import Pool
 import numpy as np
 
 
-POPULATION_COUNT = 25
+POPULATION_COUNT = 12
 MUTATION_SHARE = 0.1 # percentage of the genes to mutate (1 means mutate all genes)
 MUTATION_CHANCE = 0.1 # chance for each individual to be mutated (1 means mutate all genes)
 DEATH_RATE = 0.2 # percentage of the population who die on each selection

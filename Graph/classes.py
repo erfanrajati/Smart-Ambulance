@@ -24,6 +24,9 @@ class Node:
     def __repr__(self):
         return str(((self.x, self.y), str(self.value)))
 
+    def __sub__(self, other):
+        return abs(self.x - other.x) + abs(self.y - other.y)
+        
 
 class CityMap:
     def __init__(self, height, width, start, matrix):
@@ -93,6 +96,7 @@ class Path:
     def __init__(self, city: CityMap, nodes: list[Node] = None, cost = 0):
         self.nodes:list[Node] = nodes if nodes is not None else []
         self.cost = cost
+        self.f = 10e16
         self.city = city
         self.goals_reached = []
 
@@ -106,6 +110,7 @@ class Path:
             light_state = (self.cost % 20) < 10 # True means green and False means red
             self.cost += node.get_cost(light_state)
         
+        self.f = self.cost + self.huristic() # f(n) = g(n) + h(n)
         self.nodes.append(node)
     
     def expand_latest(self):
@@ -126,9 +131,12 @@ class Path:
         
         return new_paths
     
-
-    
-
+    def huristic(self):
+        not_reached_goals = [self.city.node_index[s] for s in self.city.goal_states if s not in self.goals_reached]
+        if not not_reached_goals:
+            return 0
+        return len(not_reached_goals) * min(map(lambda s: self.nodes[-1] - s, not_reached_goals)) # subtraction is overloaded in Node class to calculate Manhatan Distance
+        
 
 
 class Frontier:
@@ -137,6 +145,11 @@ class Frontier:
     
     def get_best_uninformed(self):
         best = min(self.paths, key=lambda p: p.cost)
+        print(best)
+        return best
+    
+    def get_best_informed(self):
+        best = min(self.paths, key=lambda p: p.f)
         print(best)
         return best
     

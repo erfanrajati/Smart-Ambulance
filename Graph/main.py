@@ -19,8 +19,8 @@ def ALGORITHM(city: CityMap, style):
         # choose best path
         if style == 'UNINFORMED':
             best_path = frontier.get_best_uninformed()
-        # elif style == 'INFORMED':
-        #     best_path = frontier.get_best_informed()
+        elif style == 'INFORMED':
+            best_path = frontier.get_best_informed()
         
         # check if the goal is achieved
         if len(best_path.goals_reached) == len(city.goal_states):
@@ -40,10 +40,19 @@ def main():
     h, w, s, city = CityMap.get_input()
     city = CityMap(h, w, s, city)
 
+    sys.stdout = open('./UCS.log', 'w')
     result_ucs = ALGORITHM(city, 'UNINFORMED')
 
+    print()
+    print("###############################      UCS")
     print(result_ucs)
 
+    sys.stdout = open('./A-Star.log', 'w')
+    result_astar = ALGORITHM(city, 'INFORMED')
+
+    print()
+    print("###############################       A*")
+    print(result_astar)
     
     # path = [(0, 0), (1, 0), (2, 0), (2, 1), (2, 2), (2, 3), (1, 3)]
     # nodes = []

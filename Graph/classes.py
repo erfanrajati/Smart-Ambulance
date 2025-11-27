@@ -1,0 +1,146 @@
+import copy
+import random
+import string
+
+
+class Node:
+    def __init__(self, x, y, cost, value):
+        def random_string(length=12):
+            chars = string.ascii_letters + string.digits
+            return ''.join(random.choice(chars) for _ in range(length))
+        
+        self.x = x
+        self.y = y
+        self.id = random_string()
+        self.cost = cost
+        self.value = value
+
+    def get_cost(self, light_state):
+        if self.value == 'L' and not light_state: # if the node is a traffic light and the light is red
+            return 10
+        else:
+            return self.cost # already set 1 for G and S locations
+
+    def __repr__(self):
+        return str(((self.x, self.y), str(self.value)))
+
+
+class CityMap:
+    def __init__(self, height, width, start, matrix):
+        self.map: list[list[Node]] = [
+            [None for _ in range(width)] 
+            for _ in range(height)
+        ]
+        self.goal_states = []
+        self.node_index: dict[str, Node] = dict()
+        self.h = height
+        self.w = width
+        self.start = start
+        for i, row in enumerate(matrix):
+            for j, cell in enumerate(row):
+                cost = None
+                value = None
+                try:
+                    cost = int(cell)
+                    value = cost
+                except:
+                    if cell in ('S', 'G', 'L'):
+                        cost = 1
+                        value = cell
+                finally:
+                    new_node = Node(i, j, cost, value)
+                    self.map[i][j] = new_node
+                    if cell == 'G':
+                        self.goal_states.append(new_node.id)
+                        self.node_index[new_node.id] = new_node
+    
+    def expand_node(self, x, y):
+        dirs = [(x-1, y), (x, y+1), (x+1, y), (x, y-1)]
+        children: list[Node] = []
+        for i, j in dirs:
+            if i < 0 or j < 0: # Bypass Python's reverse indexing feature
+                continue
+            try: 
+                children.append(self.map[i][j])
+            except IndexError: # Skip out or range indices
+                continue
+        return children
+    
+    @classmethod
+    def get_input(cls):
+        x, y = map(int, input().split())
+        matrix = []
+        start = None
+        for i in range(x):
+            line = list(input().upper())
+            # print(matrix)
+            matrix.append(line)
+            try:
+                start = (i, line.index('S'))
+            except ValueError:
+                continue
+        
+        if start is None:
+            raise ValueError("Start Point not specified!")
+        
+        height = x
+        width = y
+        return height, width, start, matrix
+
+
+
+class Path:
+    def __init__(self, city: CityMap, nodes: list[Node] = None, cost = 0):
+        self.nodes:list[Node] = nodes if nodes is not None else []
+        self.cost = cost
+        self.city = city
+        self.goals_reached = []
+
+    def add_node(self, node: Node):
+        if node.value == 'G' and node.id not in [n.id for n in self.nodes]: # Do not count a goal state twice
+            self.goals_reached.append(node.id)
+        
+        if self.nodes and node.id == self.nodes[-1].id: # In case of STAY
+            self.cost += 1
+        else:
+            light_state = (self.cost % 20) < 10 # True means green and False means red
+            self.cost += node.get_cost(light_state)
+        
+        self.nodes.append(node)
+    
+    def expand_latest(self):
+        latest = self.nodes[-1]
+        children = self.city.expand_node(latest.x, latest.y)
+        children.append(latest)
+        new_paths = []
+        for node in children:
+            # if node.id == latest.id: # STAY should be considered
+            #     pass
+            # # elif node.id in [n.id for n in self.nodes]: # Do not consider nodes that are already visited,
+            # if node.id in [n.id for n in self.nodes]: # Do not consider nodes that are already visited,
+            #     continue
+
+            new_path = copy.deepcopy(self)
+            new_path.add_node(node)
+            new_paths.append(new_path)
+        
+        return new_paths
+    
+
+    
+
+
+
+class Frontier:
+    def __init__(self, paths: list[Path] = None):
+        self.paths = paths if paths is not None else []
+    
+    def get_best_uninformed(self):
+        best = min(self.paths, key=lambda p: p.cost)
+        print(best)
+        return best
+    
+    def add_new_paths(self, paths: list[Path]):
+        for p in paths:
+            self.paths.append(p)
+

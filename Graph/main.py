@@ -37,19 +37,24 @@ def ALGORITHM(city: CityMap, style):
 
 
 def main():
+    original_stdout = sys.stdout
+    
+    
     h, w, s, city = CityMap.get_input()
     city = CityMap(h, w, s, city)
 
-    sys.stdout = open('./UCS.log', 'w')
-    result_ucs = ALGORITHM(city, 'UNINFORMED')
+    # sys.stdout = open('./UCS.log', 'w')
+    # result_ucs = ALGORITHM(city, 'UNINFORMED')
 
-    print()
-    print("###############################      UCS")
-    print(result_ucs)
+    # sys.stdout = original_stdout
+    # print()
+    # print("###############################      UCS")
+    # print(result_ucs)
 
     sys.stdout = open('./A-Star.log', 'w')
     result_astar = ALGORITHM(city, 'INFORMED')
 
+    sys.stdout = original_stdout
     print()
     print("###############################       A*")
     print(result_astar)

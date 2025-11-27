@@ -90,6 +90,24 @@ class CityMap:
         width = y
         return height, width, start, matrix
 
+    def __repr__(self):
+        for row in self.map:
+            for node in row:
+                print(node.value, end = ' ')
+            print()
+
+        return ''
+    
+    def print_marked_path(self, path):
+        for i, row in enumerate(self.map):
+            for j, node in enumerate(row):
+                if (i, j) in path:
+                    print('#', end=' ')
+                else:
+                    print(node.value, end = ' ')
+            print()
+
+        return ''
 
 
 class Path:
@@ -137,6 +155,28 @@ class Path:
             return 0
         return len(not_reached_goals) * min(map(lambda s: self.nodes[-1] - s, not_reached_goals)) # subtraction is overloaded in Node class to calculate Manhatan Distance
         
+    def print_nodes(self):
+        print(*self.nodes, sep=' --> ')
+    
+    def __repr__(self):
+        print()
+        print("------------------------")
+        print(f"Total Cost: {self.cost}")
+        print()
+        print(f"f(n): {self.f}")
+        print()
+        print(f"Goals Achieved: {len(self.goals_reached)} | {[self.city.node_index[s] for s in self.goals_reached]}")
+        print()
+        print('Marked Path: ')
+        self.city.print_marked_path(
+            path=[(n.x, n.y) for n in self.nodes]
+        )
+        print()
+        print("Nodes:")
+        self.print_nodes()
+        print("------------------------")
+
+        return ''
 
 
 class Frontier:

@@ -76,6 +76,25 @@ class CityMap:
                 continue
         return children
 
+    def polish_map(self, new_init: tuple[int, int], new_goal: tuple[int, int]):
+        for i in range(self.h):
+            for j in range(self.w):
+                value = self.map[i][j].value
+                if value == 'S':
+                    if i == new_init[0] and j == new_init[1]:
+                        continue
+                    else:
+                        self.map[i][j].value = 1
+                elif value == 'G':
+                    if i == new_goal[1] and j == new_goal[1]:
+                        continue
+                    else:
+                        self.map[i][j].value = 1
+
+        self.init_states = [self.map[new_init[0]][new_init[1]].id]
+        self.goal_states = [self.map[new_goal[0]][new_goal[1]].id]
+
+
     def __repr__(self):
         for row in self.map:
             for node in row:
@@ -171,7 +190,7 @@ class Frontier:
     
     def get_best_informed(self):
         best = min(self.paths, key=lambda p: p.f)
-        print(best)
+        # print(best)
         return best
     
     def add_new_paths(self, paths: list[Path]):

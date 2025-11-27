@@ -25,7 +25,33 @@ class Chromosome:
             self.adj_matrix[new_help][gene] = 1
 
     def fitness(self):
-        pass
+        # generate a city map that only includes start and goal for one gene
+        # calculate the final cost of that gene
+        # return the worst cost of all genes
+        all_genes_fitnesses = []
+        for i in range(self.width):
+            gene = list(map(self.adj_matrix, lambda row: row[i]))
+
+            init_node_id = self.city.init_states[gene.index(1)] # reminder: only one item is 1 in each gene
+            init_node = self.city.node_index[init_node_id]
+            init_coords = (init_node.x, init_node.y)
+
+            goal_node_id = self.city.goal_states[i]
+            goal_node = self.city.node_index[goal_node_id]
+            goal_coords = (goal_node.x, goal_node.y)
+
+            new_city = copy.deepcopy(self.city)
+            new_city.polish_map(init_coords, goal_coords)
+
+            # run A-STAR on new map
+            all_genes_fitnesses.append(
+                A_STAR(new_city, start=init_coords).cost
+            )
+
+            del new_city
+        
+        return max(all_genes_fitnesses)
+
 
     def reproduce(self, other):
         get_from_self = set(random.sample(range(self.width), self.width * 2 // 3)) # get random genes from parent 1, can be 2/3rd of all the genes at most

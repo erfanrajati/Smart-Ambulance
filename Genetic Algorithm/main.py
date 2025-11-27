@@ -7,11 +7,12 @@ def GENETIC_ALGORITHM():
     variance = initial_population.variance()
     
     population = initial_population
+    generation = 0
     while not -1 < variance < 1:
-        print(variance)
+        print("Generation:", generation, "| Variance:", variance)
         population.individuals = population.new_generation() # selection, mutation, death rate consideration
         variance = population.variance()
-    
+        generation += 1
     result = population._normal_sort()[0]
 
     print("Final Fitness:", result.fitness())

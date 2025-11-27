@@ -1,8 +1,16 @@
 from astar import *
+from multiprocessing import Pool
+import numpy as np
 
-POPULATION_COUNT = 5
-MUTATION_SHARE = 0.3 # percentage of the genes to mutate (1 means mutate all genes)
-MUTATION_RATE = 0.1 # percentage of the population to mutate (1 means mutate all genes)
+
+POPULATION_COUNT = 20
+MUTATION_SHARE = 0.1 # percentage of the genes to mutate (1 means mutate all genes)
+MUTATION_CHANCE = 0.1 # chance for each individual to be mutated (1 means mutate all genes)
+DEATH_RATE = 0.3 # percentage of the population who die on each selection
+
+def compute_fitness(c):
+    return c, c.fitness()
+
 
 class Chromosome:
     def __init__(self, city: CityMap, solution: list):
@@ -30,7 +38,7 @@ class Chromosome:
         # return the worst cost of all genes
         all_genes_fitnesses = []
         for i in range(self.width):
-            gene = list(map(self.adj_matrix, lambda row: row[i]))
+            gene = list(map(lambda row: row[i], self.adj_matrix))
 
             init_node_id = self.city.init_states[gene.index(1)] # reminder: only one item is 1 in each gene
             init_node = self.city.node_index[init_node_id]
@@ -76,7 +84,7 @@ class Chromosome:
 class Population:
     def __init__(self, city: CityMap):
         self.city = city
-        self.individuals: list[Chromosome]
+        self.individuals: list[Chromosome] = []
         for _ in range(POPULATION_COUNT):
             solution = []
             for j in range(len(self.city.goal_states)):
@@ -86,12 +94,49 @@ class Population:
             self.individuals.append(
                 Chromosome(self.city, solution)
             )
-            
+    
+    def _normal_sort(self):
+        return sorted(self.individuals, key=lambda c: c.fitness(), reverse=True)
 
+    def _parallel_fitness_calc(self):
+        with Pool() as pool:
+            fitnesses = pool.map(compute_fitness, self.individuals)
+        
+        return fitnesses
+    
+    def sort(self):
+        fitnesses = self._parallel_fitness_calc()
+        fitnesses.sort(key=lambda x: x[1])
+        return [c for c, f in fitnesses[::-1]]
 
+    def select(self):
+        # sorted_population = self._normal_sort()
+        sorted_population = self.sort()
 
-city = CityMap()
+        l = len(sorted_population)
+        return sorted_population[round(l * DEATH_RATE) : ]
+    
+    def new_generation(self):
+        selected_population = self.select()
 
-gene = Chromosome(city=city, solution=[(0, 1), (1, 0)])
+        new_count = len(self.individuals) - len(selected_population) # how many new individuals should be created
+        children = []
+        for _ in range(new_count):
+            parent1, parent2 = random.sample(selected_population, 2)
+            child = parent1.reproduce(parent2)
 
-print(gene)
+            mutation = random.uniform(0.0, 1.0) < MUTATION_CHANCE
+            if mutation:
+                child.mutate()
+
+            children.append(child)
+        
+        return selected_population + children
+    
+    def variance(self):
+        with Pool() as pool:
+            fitnesses = pool.map(compute_fitness, self.individuals)
+        
+        fitnesses = [f[1] for f in fitnesses]
+        return float(np.var(fitnesses))
+
